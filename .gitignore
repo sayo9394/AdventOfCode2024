@@ -1,1 +1,2 @@
-day_1/target
+**/target
+day_1/cpp/build

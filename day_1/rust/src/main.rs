@@ -8,7 +8,9 @@ use std::path::Path;
 // each string is a line in the file
 // if there is an error, returning 2 empty vectors
 fn read_lines<P>(filename: P) -> (Vec<i32>, Vec<i32>)
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename).unwrap();
     let lines = io::BufReader::new(file).lines();
     let mut set1 = Vec::new();
@@ -24,15 +26,22 @@ where P: AsRef<Path>, {
     (set1, set2)
 }
 
-
 fn main() {
     println!("Hello, world!");
-    // we need to read to read the file in /intput/input.txt 
-    let (mut set1, mut set2) = read_lines("input/input.txt");
+    // we need to read to read the file in /intput/input.txt
+    // get file from args
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: {} <filename>", args[0]);
+        std::process::exit(1);
+    }
+    let filename = &args[1];
+    let (mut set1, mut set2) = read_lines(filename);
     set1.sort();
     set2.sort();
 
-    let difference = set1.iter()
+    let difference = set1
+        .iter()
         .zip(set2.iter())
         .map(|(a, b)| (a - b).abs())
         .collect::<Vec<i32>>();
