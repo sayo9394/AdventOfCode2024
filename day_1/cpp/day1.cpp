@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <numeric>
+#include <map>
 
 // This function reads a file where each line is in the form of a number <space>
 // number
@@ -45,6 +46,7 @@ read_file(const std::string& filename)
     return std::make_pair(left_list, right_list);
 }
 
+// This is part 1 of day 1
 // This function calculates the difference between two sets into a vector
 // the function then returns the sum of the elements in the vector
 std::optional<int> calculate_set_difference(const std::multiset<int>& left,
@@ -57,20 +59,26 @@ std::optional<int> calculate_set_difference(const std::multiset<int>& left,
         std::cout << "The sizes of the two sets are not the same\n";
         return std::nullopt;
     }
-    // iterate over both the left and right sets and insert the absolute difference into the vector
-    // auto it_left = left.begin();
-    // auto it_right = right.begin();
-    // while (it_left != left.end() && it_right != right.end())
-    // {
-    //     difference.push_back(std::abs(*it_left - *it_right));
-    //     ++it_left;
-    //     ++it_right;
-    // }
-    //
     // return the sum of the elements in the vector
     std::transform(left.begin(), left.end(), right.begin(), std::back_inserter(difference),
                    [](int a, int b) { return std::abs(a - b); });
     return std::make_optional(std::accumulate(difference.begin(), difference.end(), 0));
+}
+
+
+// Part 2 of day 1
+// This function calculates the total similarity score. The similarity score is by adding up each
+// number in the left list after multipluying it by the number of times it appears in the right list
+std::optional<int> calculate_frequency_weighted_sum(const std::multiset<int>& left,
+                                                    const std::multiset<int>& right)
+{
+    int weighted_sum = 0;
+    for (const auto& number : left)
+    {
+        weighted_sum += number * right.count(number); // Direct count on the multiset
+        std::cout << "Number: " << number << " Frequency: " << right.count(number) << '\n';
+    }
+    return weighted_sum;
 }
 
 // the file name is sent as an argument to the program
@@ -97,5 +105,15 @@ int main(int argc, char* argv[])
         return 1;
     }
     std::cout << "The sum of the differences is: " << difference.value() << '\n';
+
+    const auto similarity_score =
+            calculate_frequency_weighted_sum(result.value().first, result.value().second);
+    if (!similarity_score.has_value())
+    {
+        std::cerr << "Error calculating similarity score\n";
+        return 1;
+    }
+    std::cout << "The similarity score is: " << similarity_score.value() << '\n';
+
     return 0;
 }
