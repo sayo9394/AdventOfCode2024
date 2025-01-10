@@ -65,7 +65,6 @@ std::optional<int> calculate_set_difference(const std::multiset<int>& left,
     return std::make_optional(std::accumulate(difference.begin(), difference.end(), 0));
 }
 
-
 // Part 2 of day 1
 // This function calculates the total similarity score. The similarity score is by adding up each
 // number in the left list after multipluying it by the number of times it appears in the right list
