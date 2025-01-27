@@ -10,14 +10,12 @@
 - 2 puzzles will be made available per day
 - one star per solved puzzle
 
-## Puzzle 1
+## Puzzle day 1
+### Part 1
 - first location to be checked is Cheif Historian's office
 - Chief is not in his office
 - Location ID
 - 2 Groups of historians creating their own list of IDs
 - 2 list of IDs side by side (input)
-
-
-
-
-
+### Part 2
+- Calculate the similarity score between the 2 lists

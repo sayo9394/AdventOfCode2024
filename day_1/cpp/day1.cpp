@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <charconv>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -7,7 +9,9 @@
 #include <utility>
 #include <vector>
 #include <numeric>
-#include <map>
+#include <variant>
+#include <ranges>
+#include <string_view>
 
 // This function reads a file where each line is in the form of a number <space>
 // number
@@ -44,6 +48,78 @@ read_file(const std::string& filename)
     std::cout << "Right list size: " << right_list.size() << '\n';
 
     return std::make_pair(left_list, right_list);
+}
+
+struct NumberLists
+{
+    std::vector<int> left {}; // explicitly empty initialisation
+    std::vector<int> right {}; // explicitly empty initialisation
+
+    NumberLists() = default; // explicitly default the default constructor
+
+    // pre-allocate memory if size is known
+    void reserve(const size_t size)
+    {
+        left.reserve(size);
+        right.reserve(size);
+    }
+};
+
+struct ParsingError
+{
+    int line_number {};
+    std::string message {};
+};
+
+using ReadResult = std::variant<ParsingError, NumberLists>;
+
+ReadResult read_file(const std::string_view filename) noexcept
+{
+    // check if filename is empty
+    if (filename.empty())
+    {
+        return ParsingError { 0, "Filename is empty" };
+    }
+
+    // handle non-null terminated strings
+    const auto safe_filename = std::string { filename };
+
+    // open the file
+    auto file = std::ifstream(safe_filename);
+    if (!file.is_open())
+    {
+        return ParsingError { 0, "Error opening file" };
+    }
+
+    NumberLists lists;
+    std::string line;
+
+    for (int i = 0; std::getline(file, line); ++i)
+    {
+        auto parts =
+                line | std::ranges::views::split(' ')
+                | std::ranges::views::transform(
+                        [](auto&& part)
+                        { return std::string_view(&*part.begin(), std::ranges::distance(part)); });
+
+        auto it = parts.begin();
+        if (it == parts.end() // check if the line is empty
+            || ++it == parts.end() // check if there is only one number
+            || ++it != parts.end()) // check if there are more than two numbers
+        {
+            return ParsingError { i, "Missing number" };
+        }
+
+        int a, b;
+        const auto& [ptr1, ec1] = std::from_chars(
+                (*parts.begin()).data(), (*parts.begin()).data() + (*parts.begin()).size(), a);
+
+        const auto& [ptr2, ec2] = std::from_chars(
+                (*std::next(parts.begin())).data(),
+                (*std::next(parts.begin())).data() + (*std::next(parts.begin())).size(), b);
+    }
+
+    return ReadResult { lists };
 }
 
 // This is part 1 of day 1
