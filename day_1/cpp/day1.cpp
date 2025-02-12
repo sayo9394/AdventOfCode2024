@@ -16,12 +16,12 @@
 // This function reads a file where each line is in the form of a number <space>
 // number
 std::optional<std::pair<std::multiset<int>, std::multiset<int>>>
-read_file(const std::string& filename)
+read_file_old(std::string_view filename)
 {
     std::multiset<int> left_list;
     std::multiset<int> right_list;
 
-    auto file = std::ifstream(filename);
+    auto file = std::ifstream(filename.data());
     if (!file.is_open())
     {
         return std::nullopt;
@@ -73,7 +73,7 @@ struct ParsingError
 
 using ReadResult = std::variant<ParsingError, NumberLists>;
 
-ReadResult read_file(const std::string_view filename) noexcept
+ReadResult read_file(std::string_view filename) noexcept
 {
     // check if filename is empty
     if (filename.empty())
@@ -96,11 +96,13 @@ ReadResult read_file(const std::string_view filename) noexcept
 
     for (int i = 0; std::getline(file, line); ++i)
     {
-        auto parts =
-                line | std::ranges::views::split(' ')
+        auto parts = line | std::ranges::views::split(' ')
                 | std::ranges::views::transform(
-                        [](auto&& part)
-                        { return std::string_view(&*part.begin(), std::ranges::distance(part)); });
+                             [](auto&& part)
+                             {
+                                 return std::string_view(&*part.begin(),
+                                                         std::ranges::distance(part));
+                             });
 
         auto it = parts.begin();
         if (it == parts.end() // check if the line is empty
@@ -111,12 +113,18 @@ ReadResult read_file(const std::string_view filename) noexcept
         }
 
         int a, b;
-        const auto& [ptr1, ec1] = std::from_chars(
-                (*parts.begin()).data(), (*parts.begin()).data() + (*parts.begin()).size(), a);
+        const auto& [ptr1, ec1] =
+                std::from_chars((*parts.begin()).data(),
+                                (*parts.begin()).data() + (*parts.begin()).size(), a);
 
         const auto& [ptr2, ec2] = std::from_chars(
                 (*std::next(parts.begin())).data(),
-                (*std::next(parts.begin())).data() + (*std::next(parts.begin())).size(), b);
+                (*std::next(parts.begin())).data() + (*std::next(parts.begin())).size(),
+                b);
+
+        // add the number a and b to NumberLists lists
+        lists.left.push_back(a);
+        lists.right.push_back(b);
     }
 
     return ReadResult { lists };
@@ -136,14 +144,16 @@ std::optional<int> calculate_set_difference(const std::multiset<int>& left,
         return std::nullopt;
     }
     // return the sum of the elements in the vector
-    std::transform(left.begin(), left.end(), right.begin(), std::back_inserter(difference),
+    std::transform(left.begin(), left.end(), right.begin(),
+                   std::back_inserter(difference),
                    [](int a, int b) { return std::abs(a - b); });
     return std::make_optional(std::accumulate(difference.begin(), difference.end(), 0));
 }
 
 // Part 2 of day 1
-// This function calculates the total similarity score. The similarity score is by adding up each
-// number in the left list after multipluying it by the number of times it appears in the right list
+// This function calculates the total similarity score. The similarity score is by adding
+// up each number in the left list after multipluying it by the number of times it appears
+// in the right list
 std::optional<int> calculate_frequency_weighted_sum(const std::multiset<int>& left,
                                                     const std::multiset<int>& right)
 {
@@ -151,7 +161,8 @@ std::optional<int> calculate_frequency_weighted_sum(const std::multiset<int>& le
     for (const auto& number : left)
     {
         weighted_sum += number * right.count(number); // Direct count on the multiset
-        std::cout << "Number: " << number << " Frequency: " << right.count(number) << '\n';
+        std::cout << "Number: " << number << " Frequency: " << right.count(number)
+                  << '\n';
     }
     return weighted_sum;
 }
@@ -165,15 +176,15 @@ int main(int argc, char* argv[])
         return 1;
     }
     const auto file_name = argv[1];
-    std::cout << "Hello, World!\n";
-    const auto result = read_file(std::string(file_name));
+    const auto result = read_file_old(file_name);
     if (!result.has_value())
     {
         std::cerr << "Error reading file\n";
         return 1;
     }
 
-    const auto difference = calculate_set_difference(result.value().first, result.value().second);
+    const auto difference =
+            calculate_set_difference(result.value().first, result.value().second);
     if (!difference.has_value())
     {
         std::cerr << "Error calculating set difference\n";
