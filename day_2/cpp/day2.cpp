@@ -49,6 +49,37 @@ std::optional<std::vector<std::vector<int>>> read_lines(const std::string_view f
     return lines;
 }
 
+
+// a report is safe is one that has both of the following are true:
+// - the levels are either all increasing or all decreasing
+// - any two adjacent levels differ by at least 1 and at most 3
+bool is_safe_report(const std::vector<int>& report)
+{
+    // check whether the report is safe
+    bool increasing = true;
+    bool decreasing = true;
+    bool safe_diff = true;
+
+    for (size_t i = 1; i < report.size(); ++i)
+    {
+        if (report[i] > report[i-1])
+        {
+            decreasing = false;
+        }
+        else if (report[i] < report[i-1])
+        {
+            increasing = false;
+        }
+        // check the absolute difference between two adjacent levels
+        // if the difference is at least 1 and at most 3, then the report is safe
+        if (std::abs(report[i] - report[i-1]) < 1 || std::abs(report[i] - report[i-1]) > 3)
+        {
+            safe_diff = false;
+        }
+    }
+    return (increasing || decreasing) && safe_diff;
+}
+
 int main(int argc, char* argv[])
 {
     // get the name of the input file from command line
@@ -62,6 +93,29 @@ int main(int argc, char* argv[])
     {
         std::cerr << "Error: " << input_file << " does not exist.\n";
         return 2;
+    }
+
+    const auto lines = read_lines(input_file.string());
+    if (lines)
+    {
+        int safe_reports = 0;
+        std::cout << "Number of reports: " << lines->size() << '\n';
+        // check whether the reports are safe
+        for (const auto& report : *lines)
+        {
+            std::cout << "Number of levels: " << report.size() << '\n';
+             std::cout << "Is the report safe? " << std::boolalpha << is_safe_report(report) << '\n';
+            if (is_safe_report(report))
+            {
+                ++safe_reports;
+            }
+        }
+        std::cout << "Number of safe reports: " << safe_reports << '\n';
+    }
+    else
+    {
+        std::cerr << "Error: cannot read the lines.\n";
+        return 3;
     }
 
     return 0;
